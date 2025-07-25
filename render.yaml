@@ -1,9 +1,7 @@
 services:
   - type: web
     name: painelbot
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
-    envVars:
-      - key: TOKEN
-        value: 8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    pythonVersion: 3.11.9
