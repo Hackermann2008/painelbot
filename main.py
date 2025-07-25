@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4"
+TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4"  # Recomendado colocar como variável de ambiente depois
 
 user_states = {}
 
@@ -64,4 +64,14 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("👋 Até mais!")
     elif user_states[chat_id] == 2:
         if text.startswith("1") or text.startswith("2"):
-            user_states[chat_id]
+            await update.message.reply_text("👁️‍🗨️ Em breve novas atualizações.")
+    elif user_states[chat_id] == 4:
+        if text.startswith("1") or text.startswith("2"):
+            await update.message.reply_text(tela_5())
+
+# Executar o bot
+if __name__ == '__main__':
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+    app.run_polling()
