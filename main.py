@@ -10,46 +10,38 @@ from telegram.ext import (
 TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4"
 user_states = {}
 
-# Telas do funil
 def tela_1():
     return (
-        "💻 Seja bem-vindo ao BOT OFICIAL do PAINEL DO SOMBRA V4.7\n\n"
-        "⚠️ Aqui não é lugar pra curiosos. Se você chegou até aqui, é porque quer poder, anonimato e controle.\n\n"
-        "👇 Me diga o que você quer:"
+        "💻 Seja bem-vindo ao nosso Assistente Virtual!\n\n"
+        "👇 Escolha uma das opções abaixo para continuar:"
     )
 
 def tela_2():
     return (
-        "🧠 O Painel do Sombra V4.7 não é brinquedo.\n"
-        "Ele é um painel privado com funções exclusivas pra quem quer hackear o sistema sem ser rastreado.\n\n"
-        "⚙️ O que ele faz:\n\n"
-        "• Gerador de dados e CCs\n"
-        "• Validador automático\n"
-        "• Acesso a consultas privadas\n"
-        "• Integração com sites de venda\n"
-        "• Segurança de IP com camadas de proteção\n\n"
-        "⚡ Atualizações mensais\n🔒 Suporte 24h\n🔥 Versão atual: V4.7\n\n"
-        "Deseja ver mais ou seguir?"
+        "📦 Nosso sistema oferece soluções avançadas:\n"
+        "• Gerador de relatórios automáticos\n"
+        "• Validador de dados\n"
+        "• Integração com plataformas\n"
+        "• Suporte em tempo real\n\n"
+        "Deseja saber mais ou avançar?"
     )
 
 def tela_4():
     return (
-        "💥 OFERTA LIMITADA:\n\n"
-        "O Painel do Sombra V4.7 está sendo liberado por:\n"
-        "📦 R$ 35 (acesso vitalício)\n\n"
-        "🚫 Após as 20 cópias vendidas dessa versão, ele será fechado novamente.\n\n"
-        "✅ Pagamento via Pix ou Cripto\n\n"
-        "Deseja garantir sua cópia agora?"
+        "🔥 Promoção Especial:\n\n"
+        "Acesso vitalício ao sistema por apenas:\n"
+        "💰 R$ 35,00\n\n"
+        "✅ Pagamento via Pix ou Cripto\n"
+        "Deseja adquirir agora?"
     )
 
 def tela_5():
     return (
-        "🧾 Para efetuar o pagamento via Pix, acesse esse link:\n"
-        "https://pay.sunize.com.br/gbKjfVgy\n\n"
-        "🛡️ Em até 15 minutos, você recebe o acesso completo + tutorial."
+        "🧾 Para pagamento, acesse:\n"
+        "https://example.com/pagamento\n\n"
+        "📧 Você receberá o acesso completo em até 15 minutos."
     )
 
-# Comando /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     user_states[chat_id] = 1
@@ -57,7 +49,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text(tela_1(), reply_markup=reply_markup)
 
-# Respostas do funil
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     if not message:
@@ -65,7 +56,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = message.text or ""
     chat_id = update.effective_chat.id
-
     state = user_states.get(chat_id, 1)
 
     if state == 1:
@@ -82,20 +72,19 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await message.reply_text(tela_4(), reply_markup=reply_markup)
 
         elif text.startswith("3"):
-            await message.reply_text("📞 Suporte: https://wa.me/553591418188/?text=duvida/painel")
+            await message.reply_text("📞 Suporte: https://wa.me/seusuporte")
 
         elif text.startswith("4"):
             await message.reply_text("👋 Até mais!")
 
     elif state == 2:
         if text.startswith("1") or text.startswith("2"):
-            await message.reply_text("👁️‍🗨️ Em breve novas atualizações.")
+            await message.reply_text("🔧 Em breve, novas funcionalidades!")
 
     elif state == 4:
         if text.startswith("1") or text.startswith("2"):
             await message.reply_text(tela_5())
 
-# Execução principal
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
