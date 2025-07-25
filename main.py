@@ -3,12 +3,15 @@
 # para garantir compatibilidade com python-telegram-bot==20.6
 
 import os
+import asyncio
+import aiohttp # Nova importação para fazer requisições HTTP
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 import telegram.ext
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+import logging
 
 # --- Configurações ---
-BOT_TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4"
+BOT_TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4" # Ou use os.environ.get("BOT_TOKEN")
 
 # URL base do seu serviço no Render (Render a define automaticamente)
 WEBHOOK_URL_BASE = os.environ.get("RENDER_EXTERNAL_URL")
@@ -19,9 +22,13 @@ if not WEBHOOK_URL_BASE:
 # Caminho do webhook (ajuda a isolar seu bot)
 WEBHOOK_URL_PATH = f"/{BOT_TOKEN}/"
 WEBHOOK_URL = f"{WEBHOOK_URL_BASE}{WEBHOOK_URL_PATH}"
+SELF_PING_URL = WEBHOOK_URL # URL para o próprio serviço se "pingar"
 
 # Porta que o Render espera que o serviço escute
 PORT = int(os.environ.get('PORT', 8000)) # 8000 é uma porta comum, Render usa $PORT
+
+# Intervalo de keep-alive em segundos (ex: 600 = 10 minutos)
+KEEP_ALIVE_INTERVAL = int(os.environ.get('KEEP_ALIVE_INTERVAL', 600))
 
 # --- Handlers (funções do bot) ---
 # Etapa 1: Boas-vindas
@@ -139,17 +146,41 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer() # Importante
         await query.edit_message_text("👋 Até logo!")
 
+# --- Função de Keep-Alive ---
+async def keep_alive_task():
+    """Tarefa assíncrona que envia um ping para si mesma a cada intervalo."""
+    await asyncio.sleep(10) # Pequeno atraso inicial para garantir que o servidor esteja pronto
+    async with aiohttp.ClientSession() as session:
+        while True:
+            try:
+                # Faz uma requisição GET simples para o próprio endpoint do webhook
+                async with session.get(SELF_PING_URL, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                    logging.info(f"[Keep-Alive] Ping enviado para {SELF_PING_URL}. Status: {resp.status}")
+            except Exception as e:
+                logging.error(f"[Keep-Alive] Erro ao enviar ping: {e}")
+            
+            # Aguarda o intervalo definido antes do próximo ping
+            await asyncio.sleep(KEEP_ALIVE_INTERVAL)
+
 # --- Configuração e Inicialização do Webhook ---
 async def set_webhook_on_start(application: telegram.ext.Application):
     """Configura o webhook quando o bot inicia."""
     success = await application.bot.set_webhook(WEBHOOK_URL)
     if success:
         print(f"✅ Webhook configurado com sucesso em {WEBHOOK_URL}")
+        # Inicia a tarefa de keep-alive após o webhook ser configurado
+        asyncio.create_task(keep_alive_task())
     else:
         print(f"❌ Falha ao configurar o webhook em {WEBHOOK_URL}")
 
 def main():
     """Configura e inicia o bot em modo webhook."""
+    # Configuração básica de logging
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO
+    )
+    
     # Cria a aplicação
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
