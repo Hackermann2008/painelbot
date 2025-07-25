@@ -2,11 +2,28 @@
 # Importante: Crie um arquivo .python-version com "3.12.4" na raiz do seu repositório no Render
 # para garantir compatibilidade com python-telegram-bot==20.6
 
+import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+import telegram.ext
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
+# --- Configurações ---
 BOT_TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4"
 
+# URL base do seu serviço no Render (Render a define automaticamente)
+WEBHOOK_URL_BASE = os.environ.get("RENDER_EXTERNAL_URL")
+if not WEBHOOK_URL_BASE:
+    # Para desenvolvimento local, você precisaria de um túnel (ngrok, etc.)
+    WEBHOOK_URL_BASE = "https://seu-servico-webhook.onrender.com" # Substitua pelo seu URL real no Render
+
+# Caminho do webhook (ajuda a isolar seu bot)
+WEBHOOK_URL_PATH = f"/{BOT_TOKEN}/"
+WEBHOOK_URL = f"{WEBHOOK_URL_BASE}{WEBHOOK_URL_PATH}"
+
+# Porta que o Render espera que o serviço escute
+PORT = int(os.environ.get('PORT', 8000)) # 8000 é uma porta comum, Render usa $PORT
+
+# --- Handlers (funções do bot) ---
 # Etapa 1: Boas-vindas
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -29,6 +46,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     elif update.callback_query:
         # Vindo de um botão "Voltar pro início"
+        await update.callback_query.answer() # Importante para fechar o "botão carregando"
         await update.callback_query.edit_message_text(
             "💻 Seja bem-vindo ao BOT OFICIAL do *PAINEL DO SOMBRA V4.7*\n\n"
             "⚠️ Aqui não é lugar pra curiosos. Se você chegou até aqui, é porque quer poder, anonimato e controle.\n\n"
@@ -121,10 +139,36 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer() # Importante
         await query.edit_message_text("👋 Até logo!")
 
-# Inicialização do bot
+# --- Configuração e Inicialização do Webhook ---
+async def set_webhook_on_start(application: telegram.ext.Application):
+    """Configura o webhook quando o bot inicia."""
+    success = await application.bot.set_webhook(WEBHOOK_URL)
+    if success:
+        print(f"✅ Webhook configurado com sucesso em {WEBHOOK_URL}")
+    else:
+        print(f"❌ Falha ao configurar o webhook em {WEBHOOK_URL}")
+
+def main():
+    """Configura e inicia o bot em modo webhook."""
+    # Cria a aplicação
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    # Registra os handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button_handler))
+
+    # Configura o webhook após a inicialização
+    application.post_init = set_webhook_on_start
+
+    # Inicia o servidor web para receber os webhooks
+    print(f"🚀 Iniciando servidor webhook na porta {PORT}...")
+    application.run_webhook(
+        listen="0.0.0.0",         # Escuta em todas as interfaces de rede
+        port=PORT,                # Usa a porta definida pelo Render
+        url_path=WEBHOOK_URL_PATH, # Caminho da URL do webhook
+        webhook_url=WEBHOOK_URL   # URL completa do webhook
+    )
+
 if __name__ == '__main__':
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    # print("Bot rodando...") # Opcional, mas não causa erro
-    app.run_polling()
+    main()
+    
