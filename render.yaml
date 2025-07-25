@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: painel-bot
+    name: painelbot
     env: python
+    plan: free
     buildCommand: ""
     startCommand: python main.py
-    plan: free
