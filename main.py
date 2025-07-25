@@ -1,7 +1,13 @@
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
-TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4"  # Recomendado colocar como variável de ambiente depois
+TOKEN = "8440160263:AAHU1gp6F_kZN9OQp1KLC3_Yz0oY8Krsgs4"
 
 user_states = {}
 
@@ -36,12 +42,13 @@ def tela_5():
             "https://pay.sunize.com.br/gbKjfVgy\n\n"
             "🛡️ Em até 15 minutos, você recebe o acesso completo + tutorial.")
 
-# Bot logic
+# Início do bot
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_states[update.effective_chat.id] = 1
     reply_markup = ReplyKeyboardMarkup([["1️⃣", "2️⃣"], ["3️⃣", "4️⃣"]], resize_keyboard=True)
     await update.message.reply_text(tela_1(), reply_markup=reply_markup)
 
+# Lógica das mensagens
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     chat_id = update.effective_chat.id
@@ -49,7 +56,9 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chat_id not in user_states:
         user_states[chat_id] = 1
 
-    if user_states[chat_id] == 1:
+    state = user_states[chat_id]
+
+    if state == 1:
         if text.startswith("1"):
             user_states[chat_id] = 2
             reply_markup = ReplyKeyboardMarkup([["1️⃣", "2️⃣"], ["3️⃣"]], resize_keyboard=True)
@@ -62,14 +71,16 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("📞 Suporte: https://wa.me/553591418188/?text=duvida/painel")
         elif text.startswith("4"):
             await update.message.reply_text("👋 Até mais!")
-    elif user_states[chat_id] == 2:
+
+    elif state == 2:
         if text.startswith("1") or text.startswith("2"):
             await update.message.reply_text("👁️‍🗨️ Em breve novas atualizações.")
-    elif user_states[chat_id] == 4:
+
+    elif state == 4:
         if text.startswith("1") or text.startswith("2"):
             await update.message.reply_text(tela_5())
 
-# Executar o bot
+# Execução principal
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
